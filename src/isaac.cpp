@@ -1,6 +1,7 @@
 #ifndef __ISAAC_HPP
 #define __ISAAC_HPP
-// #define __ISAAC64
+#include <cstddef>
+#include <cstdlib>
 
 /*
 
@@ -41,7 +42,7 @@ const UINT64 GOLDEN_RATIO = UINT64(0x9e3779b97f4a7c13);
 typedef UINT64 ISAAC_INT;
 #endif // __ISAAC64
 
-template <int ALPHA = (8), class T = ISAAC_INT>
+template <int ALPHA = (16), class T = ISAAC_INT>
 class QTIsaac
 {
 public:
@@ -152,7 +153,7 @@ void QTIsaac<ALPHA, T>::randinit(randctx *ctx, bool bUseSeed)
    {
       // initialize using the contents of r[] as the seed
 
-      for (i = 0; i < N; i += 8)
+      for (int i = 0; i < N; i += 8)
       {
          a += r[i];
          b += r[i + 1];
@@ -177,7 +178,7 @@ void QTIsaac<ALPHA, T>::randinit(randctx *ctx, bool bUseSeed)
 
       //do a second pass to make all of the seed affect all of m
 
-      for (i = 0; i < N; i += 8)
+      for (int i = 0; i < N; i += 8)
       {
          a += m[i];
          b += m[i + 1];
@@ -203,17 +204,19 @@ void QTIsaac<ALPHA, T>::randinit(randctx *ctx, bool bUseSeed)
    else
    {
       // fill in mm[] with messy stuff
+      for (int i = 0; i < N; i += 8)
+      {
+         shuffle(a, b, c, d, e, f, g, h);
 
-      shuffle(a, b, c, d, e, f, g, h);
-
-      m[i] = a;
-      m[i + 1] = b;
-      m[i + 2] = c;
-      m[i + 3] = d;
-      m[i + 4] = e;
-      m[i + 5] = f;
-      m[i + 6] = g;
-      m[i + 7] = h;
+         m[i] = a;
+         m[i + 1] = b;
+         m[i + 2] = c;
+         m[i + 3] = d;
+         m[i + 4] = e;
+         m[i + 5] = f;
+         m[i + 6] = g;
+         m[i + 7] = h;
+      }
    }
 
    isaac(ctx);       // fill in the first set of results

@@ -2,7 +2,7 @@
 PROJ_NAME=signAndVerify
 
 # Flags for compiler
-CC_FLAGS=-W -Wextra -Wall -ansi -pedantic
+CC_FLAGS=-W -Wextra -Wall -pedantic -lgmp -std=c++11
 
 #Compiler
 CC=g++
@@ -14,14 +14,14 @@ CXX_SOURCE=$(wildcard *.cpp)
 H_SOURCE=$(wildcard *.h)
 
 # Object files
-OBJ=$(CXX_SOURCE:.cpp=.o)
+OBJ=base64.o isaac.o OAEP.o rsa.o str_utils.o
 
 all: $(PROJ_NAME)
 
-$(PROJ_NAME): $(OBJ)
+$(PROJ_NAME): main.o $(OBJ)
 	$(CC) $(CC_FLAGS) -o $@ $^
 
-test: str_utils.o test.o
+test: base64.o str_utils.o rsa.o test.o
 	$(CC) $(CC_FLAGS) -o $@ $^
 	$(info Done building test, running test suite)
 	./test
@@ -30,10 +30,13 @@ test: str_utils.o test.o
 	$(CC) -o $@ $< -c $(CC_FLAGS)
 
 main.o: main.cpp $(H_SOURCE)
-	$(CC) -o $@ $< $(CC_FLAGS)
+	$(CC) -o $@ $< -c $(CC_FLAGS)
 
 clean:
 	rm -rf *.o $(PROJ_NAME) test *~
 
 test.o: teste.cpp
+	$(CC) -o $@ $< -c $(CC_FLAGS)
+
+isaac.o: isaac.cpp
 	$(CC) -o $@ $< -c $(CC_FLAGS)

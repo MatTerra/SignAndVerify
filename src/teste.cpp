@@ -1,5 +1,6 @@
 #include <iostream>
 #include "str_utils.h"
+#include "rsa.h"
 
 // If parameter is not true, test fails
 // This check function would be provided by the test framework
