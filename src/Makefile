@@ -2,7 +2,7 @@
 PROJ_NAME=signAndVerify
 
 # Flags for compiler
-CC_FLAGS=-c -W -Wextra -Wall -ansi -pedantic
+CC_FLAGS=-W -Wextra -Wall -ansi -pedantic
 
 #Compiler
 CC=g++
@@ -19,13 +19,21 @@ OBJ=$(CXX_SOURCE:.cpp=.o)
 all: $(PROJ_NAME)
 
 $(PROJ_NAME): $(OBJ)
-	$(CC) -o $@ $^
+	$(CC) $(CC_FLAGS) -o $@ $^
+
+test: str_utils.o test.o
+	$(CC) $(CC_FLAGS) -o $@ $^
+	$(info Done building test, running test suite)
+	./test
 
 %.o: %.cpp %.h
-	$(CC) -o $@ $< $(CC_FLAGS)
+	$(CC) -o $@ $< -c $(CC_FLAGS)
 
 main.o: main.cpp $(H_SOURCE)
 	$(CC) -o $@ $< $(CC_FLAGS)
 
 clean:
-	rm -rf *.o $(PROJ_NAME) *~
+	rm -rf *.o $(PROJ_NAME) test *~
+
+test.o: teste.cpp
+	$(CC) -o $@ $< -c $(CC_FLAGS)
