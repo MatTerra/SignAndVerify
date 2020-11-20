@@ -15,3 +15,31 @@ std::string replaceSubString(std::string input, std::string substring, std::stri
     }
     return input;
 }
+
+std::string toBinary(std::string input)
+{
+    std::string output = "";
+    for (char &_char : input)
+    {
+        output += std::bitset<8>(_char).to_string();
+    }
+    return output;
+}
+
+std::string fromBinary(std::string input)
+{
+    std::string output = "";
+    std::stringstream sstream(input);
+    char c = '\0';
+    while (sstream.good())
+    {
+        if (c != '\0')
+        {
+            output += c;
+        }
+        std::bitset<8> bits;
+        sstream >> bits;
+        c = char(bits.to_ulong());
+    }
+    return output;
+}

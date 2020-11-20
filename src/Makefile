@@ -14,14 +14,14 @@ CXX_SOURCE=$(wildcard *.cpp)
 H_SOURCE=$(wildcard *.h)
 
 # Object files
-OBJ=base64.o isaac.o OAEP.o rsa.o str_utils.o
+OBJ=base64.o isaac.o oaep.o rsa.o str_utils.o
 
 all: $(PROJ_NAME)
 
 $(PROJ_NAME): main.o $(OBJ)
 	$(CC) $(CC_FLAGS) -o $@ $^
 
-test: base64.o str_utils.o rsa.o test.o
+test: base64.o str_utils.o rsa.o oaep.o test.o
 	$(CC) $(CC_FLAGS) -o $@ $^
 	$(info Done building test, running test suite)
 	./test

@@ -4,7 +4,7 @@
 
 int main()
 {
-    RSA my_rsa(1024);
+    RSA my_rsa(80);
     // std::cout << SHA3::calculate_file_hash("my_file");
     return 0;
 }
