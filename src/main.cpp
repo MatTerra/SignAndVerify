@@ -53,20 +53,15 @@ int decrypt(std::string inFile, std::string outFile, RSA *rsa, bool base64out)
         outFile = inFile + ".dec";
     std::ifstream input(inFile);
     std::ofstream output(outFile);
-    const int numberOfChars = /*base64out ? ceil((rsa->getSize() / 8) / 3) * 4 :*/ rsa->getSize();
-    char text[numberOfChars + 1];
     TRACE("Chose encrypt, reading file");
-    input.read(text, numberOfChars);
-    text[numberOfChars] = '\0';
-    // if (input.good())
+    std::string toDecrypt;
+    std::getline(input, toDecrypt);
+    // if (toEncrypt.size() > rsa->getSize() / 8)
     // {
-    //     std::cerr << "File to long to decrypt using this key!";
+    //     std::cerr << "File to long to encrypt using this key!";
     //     exit(EX_USAGE);
     // }
-    std::cout
-        << text << std::endl;
     TRACE("Read file");
-    std::string toDecrypt(text);
     if (base64out)
     {
         toDecrypt = toBinary(base64_decode(toDecrypt.c_str()));
