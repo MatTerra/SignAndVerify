@@ -26,20 +26,16 @@ std::string toBinary(std::string input)
     return output;
 }
 
-std::string fromBinary(std::string input)
+void fromBinary(char *output, std::string input)
 {
-    std::string output = "";
     std::stringstream sstream(input);
     char c = '\0';
+    int i = 0;
     while (sstream.good())
     {
-        if (c != '\0')
-        {
-            output += c;
-        }
         std::bitset<8> bits;
         sstream >> bits;
         c = char(bits.to_ulong());
+        output[i++] = c;
     }
-    return output;
 }

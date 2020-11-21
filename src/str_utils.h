@@ -3,9 +3,10 @@
 #include <string>
 #include <bitset>
 #include <sstream>
+#include <iostream>
 
 std::string replaceSubString(std::string, std::string, std::string);
 std::string toBinary(std::string);
-std::string fromBinary(std::string);
+void fromBinary(char *, std::string);
 
 #endif // STR_UTILS_H

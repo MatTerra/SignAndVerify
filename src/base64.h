@@ -28,6 +28,8 @@
 
 */
 #include <string>
+#include <cstring>
+#include <iostream>
 
 static const std::string base64_chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -39,7 +41,7 @@ static inline bool is_base64(unsigned char c)
    return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
-std::string base64_encode(unsigned char const *bytes_to_encode, unsigned int in_len);
-std::string base64_decode(std::string const &encoded_string);
+std::string base64_encode(char const *bytes_to_encode, unsigned int in_len);
+std::string base64_decode(const char *encoded_string);
 
 #endif

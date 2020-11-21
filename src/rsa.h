@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <sysexits.h>
 
 #include "isaac.cpp"
 #include "str_utils.h"
@@ -36,7 +37,7 @@
 #define __is_defined(x) ___is_defined(x)
 #define ___is_defined(val) ____is_defined(__ARG_PLACEHOLDER_##val)
 #define ____is_defined(arg1_or_junk) __take_second_arg(arg1_or_junk 1, 0)
-#define DEBUG 0
+#define DEBUG 1
 #define TRACE(y)                     \
     if (__is_defined(DEBUG))         \
     {                                \
@@ -61,18 +62,17 @@ public:
 class RSA
 {
 public:
-    RSA(unsigned int);
+    RSA(unsigned int, std::string = "key");
+    RSA(std::string);
     std::string encrypt(std::string);
     std::string decrypt(std::string);
-
-    static const char *readKey(int type, const char *file);
+    static unsigned int getKeySize(std::string);
+    void writeKeysToFile(std::string);
+    const unsigned int getSize();
 
 private:
     mpz_t n;
-    mpz_t p;
-    mpz_t q;
     mpz_t d;
-    mpz_t tot;
     mpz_t e;
     const unsigned int size;
     void generateKeyPair();
