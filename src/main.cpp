@@ -1,10 +1,12 @@
 #include <string>
 
-#include "rsa.h"
+#include "oaep.h"
 
 int main()
 {
-    RSA my_rsa(1024);
+    OAEP meubb(1, 7, 11); 
+    std::cout << meubb.addPadding("abcdefgh") << std::endl;
+    // RSA my_rsa(1024);
     // std::cout << SHA3::calculate_file_hash("my_file");
     return 0;
 }

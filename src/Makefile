@@ -2,7 +2,7 @@
 PROJ_NAME=signAndVerify
 
 # Flags for compiler
-CC_FLAGS=-W -Wextra -Wall -pedantic -lgmp -std=c++11
+CC_FLAGS=-W -Wextra -Wall -pedantic -std=c++11
 
 #Compiler
 CC=g++
@@ -14,12 +14,12 @@ CXX_SOURCE=$(wildcard *.cpp)
 H_SOURCE=$(wildcard *.h)
 
 # Object files
-OBJ=base64.o isaac.o OAEP.o rsa.o str_utils.o
+OBJ=base64.o isaac.o oaep.o rsa.o str_utils.o
 
 all: $(PROJ_NAME)
 
 $(PROJ_NAME): main.o $(OBJ)
-	$(CC) $(CC_FLAGS) -o $@ $^
+	$(CC) $(CC_FLAGS) -o $@ $^ -lcrypto -lgmp
 
 test: base64.o str_utils.o rsa.o test.o
 	$(CC) $(CC_FLAGS) -o $@ $^
