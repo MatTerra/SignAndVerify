@@ -13,6 +13,7 @@ class OAEP {
     public:
       OAEP(int n, int k0, int k1);
       std::string addPadding(std::string);
+      std::string removePadding(std::string);
     private:
       const int n, k0, k1;
 };
