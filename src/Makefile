@@ -21,7 +21,7 @@ all: $(PROJ_NAME)
 $(PROJ_NAME): main.o $(OBJ)
 	$(CC) $(CC_FLAGS) -o $@ $^ -lcrypto -lgmp
 
-test: base64.o str_utils.o rsa.o test.o
+test: base64.o str_utils.o rsa.o oaep.o test.o
 	$(CC) $(CC_FLAGS) -o $@ $^
 	$(info Done building test, running test suite)
 	./test

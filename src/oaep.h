@@ -19,6 +19,5 @@ public:
 
 private:
   const int n, k0, k1;
-};
-
+}
 #endif

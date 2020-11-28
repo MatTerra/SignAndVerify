@@ -28,13 +28,13 @@
 */
 #include <string>
 
-std::string base64_encode(unsigned char const *bytes_to_encode, unsigned int in_len)
+std::string base64_encode(char const *bytes_to_encode, unsigned int in_len)
 {
     std::string ret;
     int i = 0;
     int j = 0;
-    unsigned char char_array_3[3];
-    unsigned char char_array_4[4];
+    char char_array_3[3];
+    char char_array_4[4];
 
     while (in_len--)
     {
@@ -71,9 +71,10 @@ std::string base64_encode(unsigned char const *bytes_to_encode, unsigned int in_
 
     return ret;
 }
-std::string base64_decode(std::string const &encoded_string)
+std::string base64_decode(const char *encoded_string)
 {
-    int in_len = encoded_string.size();
+
+    int in_len = strlen(encoded_string);
     int i = 0;
     int j = 0;
     int in_ = 0;
@@ -114,6 +115,5 @@ std::string base64_decode(std::string const &encoded_string)
         for (j = 0; (j < i - 1); j++)
             ret += char_array_3[j];
     }
-
     return ret;
 }

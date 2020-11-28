@@ -1,15 +1,5 @@
 #include "oaep.h"
 
-std::string toBinary(std::string input)
-{
-    std::string output = "";
-    for (char &_char : input)
-    {
-        output += std::bitset<8>(_char).to_string();
-    }
-    return output;
-}
-
 OAEP::OAEP(int n, int k1) : n(n), k0(160), k1(k1)
 {
     if (n % 8 != 0)

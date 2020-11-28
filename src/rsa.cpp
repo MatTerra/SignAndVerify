@@ -1,121 +1,236 @@
 #include "rsa.h"
 #include <fstream>
 
-const char *RSA::readKey(int type, const char *file)
+const unsigned int RSA::getSize()
 {
-    std::string line;
-    std::string key;
+    return this->size;
+}
 
-    std::ifstream keyFile(file);
-    if (keyFile.is_open())
+RSA::RSA(unsigned int size, std::string keyFile /* = "key" */) : size(size)
+{
+    mpz_init(this->d);
+    mpz_init(this->n);
+    mpz_init_set_ui(this->e, 65537);
+    TRACE("Starting key generation")
+    this->generateKeyPair();
+    this->writeKeysToFile(keyFile);
+}
+
+RSA::RSA(std::string keyFile) : size(RSA::getKeySize(keyFile))
+{
+
+    std::string pubKeyFile = keyFile + ".pub";
+    std::ifstream pubKey(pubKeyFile);
+    std::string file_line;
+    std::getline(pubKey, file_line);
+    mpz_init_set_str(this->n, file_line.c_str(), 10);
+    mpz_init_set_ui(this->e, 65537);
+
+    try
     {
-        while (std::getline(keyFile, line))
+        std::ifstream privKey(keyFile);
+        if (!privKey)
         {
-            key.append(line);
+            throw std::runtime_error("No private key!");
+        }
+        std::getline(privKey, file_line);
+        mpz_t priv_n;
+        mpz_init_set_str(priv_n, file_line.c_str(), 10);
+        if (mpz_cmp(this->n, priv_n) != 0)
+        {
+            std::cerr << "Public and private key n don't match!";
+            exit(EXIT_FAILURE);
+        }
+        std::getline(privKey, file_line);
+        mpz_init_set_str(this->d, file_line.c_str(), 10);
+    }
+    catch (const std::exception &e)
+    {
+        std::cout << "No private key available. Only verify and encrypt possible." << std::endl;
+        mpz_init_set_ui(this->d, 0);
+    }
+}
+
+void RSA::writeKeysToFile(std::string file)
+{
+    char n[this->size];
+    mpz_get_str(n, 10, this->n);
+    char d[mpz_sizeinbase(this->d, 10)];
+    mpz_get_str(d, 10, this->d);
+    char e[mpz_sizeinbase(this->e, 10)];
+    mpz_get_str(e, 10, this->e);
+    TRACE("Loaded keys to char variables");
+    std::string pubKeyFile = file + ".pub";
+    std::ofstream pubKey(pubKeyFile);
+    TRACE("Opened pubkey file");
+    if (pubKey)
+    {
+        pubKey << n << std::endl
+               << e;
+    }
+    else
+    {
+        std::cerr << "Couldn't open public key file!";
+    }
+    pubKey.close();
+    TRACE("Saved pubkey");
+    if (std::string(d) == std::string("0"))
+    {
+        std::cout << "No private key available, won't save private key file." << std::endl;
+        return;
+    }
+    std::ofstream privKey(file);
+    TRACE("Opened privkey file");
+    if (privKey)
+    {
+        privKey << n << std::endl
+                << d;
+    }
+    else
+    {
+        std::cerr << "Couldn't open private key file!";
+    }
+    TRACE("Saved privkey")
+}
+
+unsigned int RSA::getKeySize(std::string file)
+{
+    std::string pubKeyFile = file + ".pub";
+    std::ifstream pubKey(pubKeyFile);
+    std::string n_str;
+    std::getline(pubKey, n_str);
+    mpz_t n;
+    mpz_init_set_str(n, n_str.c_str(), 10);
+    return mpz_sizeinbase(n, 2);
+}
+
+void RSA::generateKeyPair()
+{
+    // Temporary values for key generation computations
+    mpz_t temp;
+    mpz_t temp2;
+    mpz_t p;
+    mpz_t q;
+    mpz_t tot;
+    mpz_init(temp);
+    mpz_init(temp2);
+    mpz_init(p);
+    mpz_init(q);
+    mpz_init(tot);
+    TRACE("Started mpz pointers");
+    TRACE("Will generate keys with size ");
+    TRACE(this->size);
+
+    char rand_in[this->size];     // Declare input for urandom data
+    size_t bits = this->size / 2; // Declare size of data to read from urandom
+
+    TRACE("Opening /dev/urandom");
+    std::ifstream urandom("/dev/urandom", std::ios::in | std::ios::binary); //Open stream
+    if (urandom)
+    {
+        TRACE("Started reading from urandom");
+        urandom.read(rand_in, bits);
+        mpz_import(p, bits / 8, 1, 1, 1, 0, rand_in);
+        mpz_nextprime(p, p);
+        urandom.read(rand_in, bits);
+        mpz_import(q, bits / 8, 1, 1, 1, 0, rand_in);
+        mpz_nextprime(q, q);
+        bits = this->size / 2 - 2;
+        TRACE("Adjusting key size.");
+        while (mpz_sizeinbase(n, 2) < this->size)
+        {
+            TRACE(".");
+            urandom.read(rand_in, bits);
+            mpz_import(temp, bits / 8, 1, 1, 1, 0, rand_in);
+            mpz_add(p, p, temp);
+            mpz_nextprime(p, p);
+            mpz_mul(n, p, q);
+            if (mpz_sizeinbase(n, 2) == this->size)
+                break;
+            urandom.read(rand_in, bits);
+            mpz_import(temp, bits / 8, 1, 1, 1, 0, rand_in);
+            mpz_add(q, q, temp);
+            mpz_nextprime(q, q);
+            mpz_mul(n, p, q);
         }
     }
     else
     {
-        throw fileNotFoundException(file);
+        std::cerr << "Can't read from /dev/urandom to generate keys!";
+        exit(EX_NOINPUT);
     }
-    if (type == PUBLIC)
-    {
-        key = replaceSubString(key, RSA_PUBLIC_BEGIN_HEADER, "");
-        key = replaceSubString(key, RSA_PUBLIC_END_HEADER, "");
-        key = replaceSubString(key, "\n", "");
-        key = base64_decode(key);
-    }
+    urandom.close();
 
-    std::cout << key;
-    return key.c_str();
-}
+    mpz_nextprime(q, q);
+    mpz_mul(this->n, p, q);
 
-RSA::RSA(int size)
-{
-    this->generateKeyPair(size);
-}
+    mpz_sub_ui(temp, p, 1);
+    mpz_sub_ui(temp2, q, 1);
+    mpz_mul(tot, temp, temp2);
 
-// RSA::RSA(std::string publicKey, std::string privateKey)
-// {
-//     mpz_init(this->publicKey);
-//     mpz_init(this->privateKey);
-//     mpz_set_str(this->publicKey, publicKey.c_str(), 10);
-//     mpz_set_str(this->privateKey, privateKey.c_str(), 10);
-// }
+    mpz_set_si(temp, -1);
+    mpz_powm(this->d, this->e, temp, tot);
 
-RSA::RSA(const char *publicKey, const char *privateKey)
-{
-    mpz_init(this->publicKey);
-    mpz_init(this->privateKey);
-    // mpz_import(this->privateKey, privateKey)
-}
-
-void RSA::generateKeyPair(int size)
-{
-    unsigned int e = 65537;
-    // std::random_device rd;
-    // std::mt19937 gen(rd());
-    // std::uniform_int_distribution<unsigned long> distrib(0, UINT64_MAX);
-    // std::srand(distrib(gen));
-    // std::string file = "../public.pem";
-    // const char *publicKey = "as";
-    // int a = distrib(gen), b = distrib(gen), c = distrib(gen);
-    // QTIsaac<16, ISAAC_INT> qtIsaac(a, b, c);
-
-    // mpz_t p;
-    // mpz_t q;
-    // mpz_t n;
-    mpz_t temp;
-    char rand_in[1024];
-
-    mpz_init(this->publicKey);
-    mpz_init(this->privateKey);
-    mpz_init(this->p);
-    mpz_init(this->q);
-    mpz_init(n);
-    mpz_init(temp);
-    size_t bits = 512;                                                      //Declare size of data
-    std::ifstream urandom("/dev/urandom", std::ios::in | std::ios::binary); //Open stream
-    if (urandom)
-    {
-        urandom.read(rand_in, bits);
-        mpz_import(this->p, bits / 8, 1, 1, 1, 0, rand_in);
-        mpz_nextprime(this->p, this->p);
-        urandom.read(rand_in, bits);
-        mpz_import(this->q, bits / 8, 1, 1, 1, 0, rand_in);
-        mpz_nextprime(this->q, this->q);
-        bits = 510;
-        while (mpz_sizeinbase(n, 2) < 1024)
-        {
-            urandom.read(rand_in, bits);
-            mpz_import(temp, bits / 8, 1, 1, 1, 0, rand_in);
-            mpz_add(this->p, this->p, temp);
-            mpz_nextprime(this->p, this->p);
-            mpz_mul(n, this->p, this->q);
-            if (mpz_sizeinbase(n, 2) == 1024)
-                break;
-            urandom.read(rand_in, bits);
-            mpz_import(temp, bits / 8, 1, 1, 1, 0, rand_in);
-            mpz_add(this->q, this->q, temp);
-            mpz_nextprime(this->q, this->q);
-            mpz_mul(n, this->p, this->q);
-        }
-    }
-    mpz_nextprime(this->q, this->q);
-    mpz_mul(n, this->p, this->q);
-
-    std::cout << mpz_sizeinbase(n, 2) << std::endl;
-    std::cout << mpz_out_str(stdout, 10, n) << std::endl;
-    std::cout << mpz_out_str(stdout, 10, this->p) << std::endl;
-    std::cout << mpz_out_str(stdout, 10, this->q) << std::endl;
+    TRACE(mpz_sizeinbase(n, 2));
+    TRACE("\n");
 }
 
 std::string RSA::encrypt(std::string plaintext)
 {
-    return "ciphertext";
+    TRACE("Encrypting " + plaintext + "\n");
+    if ((this->size / 8) < plaintext.size())
+    {
+        throw inputTooLargeException("Plaintext must be smaller than the modulus n!");
+    }
+    TRACE("Padding plaintext\n");
+    OAEP oaep(this->size, 90, 90);
+    std::string toEncrypt = oaep.addPadding(plaintext);
+    TRACE("Padded plaintext is " + toEncrypt + ", with size " << toEncrypt.size() << "\n");
+    TRACE("Plaintext in binary is " << toBinary(toEncrypt).c_str() << ", with size " << toBinary(toEncrypt).size() << "\n");
+    mpz_t plaintext_integer;
+    mpz_t ciphertext_integer;
+    mpz_init(plaintext_integer);
+    mpz_init(ciphertext_integer);
+    mpz_set_str(plaintext_integer, toBinary(toEncrypt).c_str(), 2);
+    mpz_powm(ciphertext_integer, plaintext_integer, this->e, this->n);
+    TRACE("Power done\n");
+    char ciphertext_binary[this->size];
+    mpz_get_str(ciphertext_binary, 2, ciphertext_integer);
+    TRACE("Got ciphertext from mpz\n");
+    std::string ciphertext(ciphertext_binary);
+    TRACE("Ciphertext is " << ciphertext << ", with size " << ciphertext.size() << "\n");
+    while (ciphertext.size() < this->size)
+    {
+        ciphertext = ciphertext.insert(0, "0");
+    }
+    TRACE("Ciphertext is " << ciphertext << ", with size " << ciphertext.size() << "\n");
+
+    return ciphertext;
 }
 
 std::string RSA::decrypt(std::string ciphertext)
 {
-    return "plaintext";
+    if (this->size < ciphertext.size())
+    {
+        throw inputTooLargeException("Ciphertext must be of the same size as the modulus n!");
+    }
+    TRACE("Decrypting " + ciphertext + "\n");
+    mpz_t ciphertext_;
+    mpz_init_set_str(ciphertext_, ciphertext.c_str(), 2);
+    TRACE("Imported number to mpz\n");
+    mpz_powm(ciphertext_, ciphertext_, this->d, this->n);
+    TRACE("Power done\n");
+    char plaintext_[this->size];
+    mpz_get_str(plaintext_, 2, ciphertext_);
+    TRACE("Got plaintext from mpz\n");
+    std::string plaintext(plaintext_);
+    if (plaintext.length() < this->size)
+    {
+        std::string missing_zeros(this->size - plaintext.length(), '0');
+        plaintext = missing_zeros + plaintext;
+    }
+    TRACE("Plaintext is " + plaintext + "\n");
+    char output[this->size];
+    fromBinary(output, plaintext);
+    return std::string(output);
 }
