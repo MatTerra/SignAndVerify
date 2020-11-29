@@ -9,15 +9,16 @@
 #include <openssl/rsa.h>
 #include <bits/stdc++.h>
 #include <openssl/evp.h>
+#include "str_utils.h"
 
 class OAEP
 {
 public:
   OAEP(int n, int k1);
-  std::string addPadding(std::string);
-  std::string removePadding(std::string);
+  int addPadding(std::string, char *);
+  std::string removePadding(char *);
 
 private:
   const int n, k0, k1;
-}
+};
 #endif

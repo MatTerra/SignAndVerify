@@ -1,10 +1,10 @@
 #include "oaep.h"
 
-OAEP::OAEP(int n, int k1) : n(n), k0(160), k1(k1)
+OAEP::OAEP(int n, int k1) : n(n), k0(256), k1(k1)
 {
     if (n % 8 != 0)
         throw std::runtime_error("The modulus must be a multiple of 8");
-    if (n < 320)
+    if (n - k1 < k0)
         throw std::runtime_error("The modulus must be at least 328 bits");
     if (n < k0 + k1 - 8)
         throw std::runtime_error("The modulus must be greater than k0+k1");
@@ -12,14 +12,14 @@ OAEP::OAEP(int n, int k1) : n(n), k0(160), k1(k1)
         throw std::runtime_error("K1 must be a multiple of 8");
 }
 
-std::string OAEP::addPadding(std::string message)
+int OAEP::addPadding(std::string message, char *output)
 {
-
     int message_length = message.length(); // message.length = n - k0 - k1
 
     if (message_length != (n - k0 - k1) / 8)
     {
-        throw std::runtime_error("Message must be n-k0-k1 bits");
+        std::cerr << "Expected message length is " << (n - k0 - k1) / 8 << std::endl;
+        throw std::runtime_error("Message must be n-k0-k1 bits.");
     }
 
     char msg[(n - k0) / 8 + 1]; // Array for padded message
@@ -49,7 +49,7 @@ std::string OAEP::addPadding(std::string message)
 
     // This seed could be random to ensure non-deterministic output, but the input is random
     const unsigned char seed[2] = "\0";
-    int result = PKCS1_MGF1(reinterpret_cast<unsigned char *>(expanded_r), (n - k0) / 8, seed, 1, EVP_sha256());
+    int result = PKCS1_MGF1(reinterpret_cast<unsigned char *>(expanded_r), (n - k0) / 8, seed, 1, EVP_sha512());
     if (result)
     {
         std::cerr << "Error on padding " << result << std::endl;
@@ -68,49 +68,42 @@ std::string OAEP::addPadding(std::string message)
     x[(n - k0) / 8] = '\0';
 
     int offset = (n - k0) / 8;
-
-    // Fifth step: Reduce x to k0 bits, which is 20 bytes or 160 bits
+    // Fifth step: Reduce x to k0 bits, which is 256 bits
     unsigned char reduced_x[(k0 / 8) + 1];
-    SHA1(x, (k0 / 8) + 1, reduced_x);
+    SHA256(x, (k0 / 8) + 1, reduced_x);
 
     reduced_x[(k0 / 8)] = '\0';
 
     // Sixth step: XOR between r and reduced x
-    char y[k0 / 8 + 1];
+    unsigned char y[k0 / 8 + 1];
 
     for (int i = 0; i < k0 / 8; i++)
     {
         y[i] = r[i] ^ reduced_x[i];
         out[offset + i] = y[i];
     }
-
+    y[k0 / 8] = '\0';
     out[n / 8] = '\0';
 
-    std::string output(out);
-
-    return output;
+    strncpy(output, out, (n / 8) + 1);
+    return 0;
 }
 
-std::string OAEP::removePadding(std::string encoded)
+std::string OAEP::removePadding(char *encoded)
 {
-    char encode_[n / 8 + 1];
-    strncpy(encode_, encoded.c_str(), n / 8);
-    encode_[n / 8] = '\0';
-
     // First step: Split encoded in X and Y (x + y = encoded)
     unsigned char encoded_x[(n - k0) / 8 + 1];
     unsigned char encoded_y[k0 / 8 + 1];
 
-    strncpy((char *)encoded_x, encode_, ((n - k0) / 8));
+    strncpy((char *)encoded_x, encoded, ((n - k0) / 8));
     encoded_x[(n - k0) / 8] = '\0';
 
-    strncpy((char *)encoded_y, &encode_[(n - k0) / 8], k0 / 8);
+    strncpy((char *)encoded_y, &encoded[(n - k0) / 8], k0 / 8);
     encoded_y[k0 / 8] = '\0';
 
     // Second step: XOR between Y and reduced X
     unsigned char reduced_x[(k0 / 8) + 1];
-    SHA1(encoded_x, (k0 / 8) + 1, reduced_x);
-
+    SHA256(encoded_x, (k0 / 8) + 1, reduced_x);
     reduced_x[k0 / 8] = '\0';
 
     char r[k0 / 8 + 1];
@@ -126,17 +119,19 @@ std::string OAEP::removePadding(std::string encoded)
 
     // This seed could be random to ensure non-deterministic output, but the input is random
     const unsigned char seed[2] = "\0";
-    int result = PKCS1_MGF1(reinterpret_cast<unsigned char *>(expanded_r), (n - k0) / 8, seed, 1, EVP_sha256());
+    int result = PKCS1_MGF1(reinterpret_cast<unsigned char *>(expanded_r), (n - k0) / 8, seed, 1, EVP_sha512());
     if (result)
     {
         std::cerr << "Error on padding " << result << std::endl;
     }
     expanded_r[(n - k0) / 8] = '\0';
 
-    char padded_message[(n - k0) / 8];
+    char padded_message[(n - k0 - k1) / 8 + 1];
 
     for (int i = 0; i < k0 / 8; i++)
         padded_message[i] = encoded_x[i] ^ expanded_r[i];
+
+    padded_message[(n - k0 - k1) / 8] = '\0';
 
     std::string output(padded_message);
     return output;

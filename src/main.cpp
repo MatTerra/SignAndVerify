@@ -2,7 +2,7 @@
 #include <getopt.h>
 #include <sysexits.h>
 
-#include "rsa.h"
+#include "rsa_.h"
 #include "str_utils.h"
 #include "base64.h"
 
@@ -16,7 +16,7 @@ enum Command
     GENERATE_KEYS = 5
 };
 
-int encrypt(std::string inFile, std::string outFile, RSA *rsa, bool base64out)
+int encrypt(std::string inFile, std::string outFile, RSA_ *rsa, bool base64out)
 {
 
     if (outFile == "")
@@ -46,7 +46,7 @@ int encrypt(std::string inFile, std::string outFile, RSA *rsa, bool base64out)
     return EXIT_SUCCESS;
 }
 
-int decrypt(std::string inFile, std::string outFile, RSA *rsa, bool base64out)
+int decrypt(std::string inFile, std::string outFile, RSA_ *rsa, bool base64out)
 {
 
     if (outFile == "")
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
         }
     }
     TRACE("Done reading options");
-    RSA *my_rsa;
+    RSA_ *my_rsa;
 
     if (generateKeys && command != Command::NOCOMMAND)
     {
@@ -201,12 +201,12 @@ int main(int argc, char **argv)
             keyLength = 1024;
         }
         TRACE("Creating keys");
-        my_rsa = new RSA(keyLength, keyFile);
+        my_rsa = new RSA_(keyLength, keyFile);
     }
     else
     {
         TRACE("Reading keys");
-        my_rsa = new RSA(keyFile);
+        my_rsa = new RSA_(keyFile);
     }
 
     TRACE("RSA loaded, starting command");
