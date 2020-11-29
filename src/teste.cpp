@@ -123,6 +123,7 @@ void test_RSA()
     RSA_ rsa(1024);
     std::string input(32, 'a');
     std::string enc = rsa.encrypt(input);
+    std::cout << enc << std::endl;
     std::string dec = rsa.decrypt(enc);
     IS_STR_EQUAL(dec, input);
     RSA_ rsaLoad("key");
@@ -131,6 +132,7 @@ void test_RSA()
 
     RSA_ rsa1024(1536);
     std::string enc2 = rsa1024.encrypt(input);
+    std::cout << enc2 << std::endl;
     IS_STR_EQUAL(rsa1024.decrypt(enc2), input);
 
     RSA_ rsaLoad2("key");
@@ -164,8 +166,8 @@ int main(void)
     // Call all tests. Using a test framework would simplify this.
     // test_replaceSubString();
     test_addPadding();
-    // test_toBinary();
-    // test_fromBinary();
+    test_toBinary();
+    test_fromBinary();
     test_RSA();
     // test_base64();
     // test_base64_and_rsa();
