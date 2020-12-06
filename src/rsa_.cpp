@@ -178,6 +178,8 @@ void RSA_::generateKeyPair()
     TRACE("\n");
 }
 
+#include "base64.h"
+
 std::string RSA_::encrypt(std::string plaintext)
 {
     TRACE("Encrypting " + plaintext + "\n");
@@ -186,16 +188,29 @@ std::string RSA_::encrypt(std::string plaintext)
         throw inputTooLargeException("Plaintext must be smaller than the modulus n!");
     }
     TRACE("Padding plaintext\n");
-    OAEP oaep(this->size, this->size - 512);
+    OAEP *oaep;
+    if (this->size > 1640)
+    {
+        oaep = new OAEP(this->size, 512, this->size - 768);
+    }
+    else
+    {
+        oaep = new OAEP(this->size, this->size - 512);
+    }
     char toEncrypt[this->size + 1];
-    oaep.addPadding(plaintext, toEncrypt);
-    TRACE("Padded plaintext is " << toEncrypt << ", with size " << sizeof(toEncrypt) << "\n");
-    TRACE("Plaintext in binary is " << toBinary(toEncrypt).c_str() << ", with size " << toBinary(toEncrypt).size() << "\n");
+    oaep->addPadding(plaintext, toEncrypt);
+    TRACE("Padded plaintext is " << base64_encode(toEncrypt, this->size) << ", with size " << sizeof(toEncrypt) << "\n");
+    std::string toEncryptBinary(toEncrypt);
+    while (toEncryptBinary.size() < this->size / 8)
+    {
+        toEncryptBinary += '\0' + std::string(toEncrypt + (toEncryptBinary.size() + 1));
+    }
+    TRACE("Plaintext in binary is " << toBinary(toEncryptBinary).c_str() << ", with size " << toBinary(toEncryptBinary).size() << "\n");
     mpz_t plaintext_integer;
     mpz_t ciphertext_integer;
     mpz_init(plaintext_integer);
     mpz_init(ciphertext_integer);
-    mpz_set_str(plaintext_integer, toBinary(toEncrypt).c_str(), 2);
+    mpz_set_str(plaintext_integer, toBinary(toEncryptBinary).c_str(), 2);
     mpz_powm(ciphertext_integer, plaintext_integer, this->e, this->n);
     TRACE("Power done\n");
     char ciphertext_binary[this->size];
@@ -223,16 +238,30 @@ std::string RSA_::sign(std::string plaintext)
         throw inputTooLargeException("Plaintext must be smaller than the modulus n!");
     }
     TRACE("Padding plaintext\n");
-    OAEP oaep(this->size, this->size - 512);
+    OAEP *oaep;
+    if (this->size > 1640)
+    {
+        oaep = new OAEP(this->size, 512, this->size - 768);
+    }
+    else
+    {
+        oaep = new OAEP(this->size, this->size - 512);
+    }
     char toSign[this->size + 1];
-    oaep.addPadding(plaintext, toSign);
+    oaep->addPadding(plaintext, toSign);
     TRACE("Padded plaintext is " << toSign << ", with size " << sizeof(toSign) << "\n");
-    TRACE("Plaintext in binary is " << toBinary(toSign).c_str() << ", with size " << toBinary(toSign).size() << "\n");
+    std::string toSignBinary(toSign);
+    while (toSignBinary.size() < this->size / 8)
+    {
+        toSignBinary += '\0' + std::string(toSign + (toSignBinary.size() + 1));
+    }
+    TRACE("Plaintext in binary is " << toBinary(toSignBinary).c_str()
+                                    << ", with size " << toBinary(toSignBinary).size() << "\n");
     mpz_t plaintext_integer;
     mpz_t ciphertext_integer;
     mpz_init(plaintext_integer);
     mpz_init(ciphertext_integer);
-    mpz_set_str(plaintext_integer, toBinary(toSign).c_str(), 2);
+    mpz_set_str(plaintext_integer, toBinary(toSignBinary).c_str(), 2);
     mpz_powm(ciphertext_integer, plaintext_integer, this->d, this->n);
     TRACE("Power done\n");
     char ciphertext_binary[this->size];
@@ -274,8 +303,16 @@ std::string RSA_::decrypt(std::string ciphertext)
     TRACE("Plaintext is " + plaintext + "\n");
     char output[this->size];
     fromBinary(output, plaintext);
-    OAEP oaep(this->size, this->size - 512);
-    std::string result = oaep.removePadding(output);
+    OAEP *oaep;
+    if (this->size > 1640)
+    {
+        oaep = new OAEP(this->size, 512, this->size - 768);
+    }
+    else
+    {
+        oaep = new OAEP(this->size, this->size - 512);
+    }
+    std::string result = oaep->removePadding(output);
     return result;
 }
 
@@ -303,8 +340,16 @@ bool RSA_::verify(std::string ciphertext, std::string hash)
     TRACE("Plaintext is " + plaintext + "\n");
     char output[this->size];
     fromBinary(output, plaintext);
-    OAEP oaep(this->size, this->size - 512);
-    std::string result = oaep.removePadding(output);
+    OAEP *oaep;
+    if (this->size > 1640)
+    {
+        oaep = new OAEP(this->size, 512, this->size - 768);
+    }
+    else
+    {
+        oaep = new OAEP(this->size, this->size - 512);
+    }
+    std::string result = oaep->removePadding(output);
     TRACE(base64_encode(hash.c_str(), 32) << std::endl
                                           << base64_encode(result.c_str(), 32) << std::endl);
     return result == hash;

@@ -82,7 +82,14 @@ int OAEP::addPadding(std::string message, char *output)
     int offset = (n - k0) / 8;
     // Fifth step: Reduce x to k0 bits, which is 256 bits
     unsigned char reduced_x[(k0 / 8) + 1];
-    SHA256(x, (k0 / 8) + 1, reduced_x);
+    if (k0 == 256)
+    {
+        SHA256(x, (k0 / 8) + 1, reduced_x);
+    }
+    else
+    {
+        SHA512(x, (k0 / 8) + 1, reduced_x);
+    }
 
     reduced_x[(k0 / 8)] = '\0';
 
@@ -115,7 +122,14 @@ std::string OAEP::removePadding(char *encoded)
 
     // Second step: XOR between Y and reduced X
     unsigned char reduced_x[(k0 / 8) + 1];
-    SHA256(encoded_x, (k0 / 8) + 1, reduced_x);
+    if (k0 == 256)
+    {
+        SHA256(encoded_x, (k0 / 8) + 1, reduced_x);
+    }
+    else
+    {
+        SHA512(encoded_x, (k0 / 8) + 1, reduced_x);
+    }
     reduced_x[k0 / 8] = '\0';
 
     char r[k0 / 8 + 1];
