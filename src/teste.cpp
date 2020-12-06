@@ -286,11 +286,11 @@ int main(void)
     // Call all tests. Using a test framework would simplify this.
     test_sha();
     test_sign_and_verify();
-    // test_replaceSubString();
-    // test_addPadding();
-    // test_toBinary();
-    // test_fromBinary();
-    // test_RSA();
-    // test_base64();
-    // test_base64_and_rsa();
+    test_replaceSubString();
+    test_addPadding();
+    test_toBinary();
+    test_fromBinary();
+    test_RSA();
+    test_base64();
+    test_base64_and_rsa();
 }

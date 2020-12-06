@@ -15,6 +15,7 @@ class OAEP
 {
 public:
   OAEP(int n, int k1);
+  OAEP(int n, int k0, int k1);
   int addPadding(std::string, char *);
   std::string removePadding(char *);
 

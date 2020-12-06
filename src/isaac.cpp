@@ -36,7 +36,7 @@
 typedef unsigned long int UINT32;
 const UINT32 GOLDEN_RATIO = UINT32(0x9e3779b9);
 typedef UINT32 ISAAC_INT;
-#else  // __ISAAC64
+#else // __ISAAC64
 typedef unsigned __int64 UINT64;
 const UINT64 GOLDEN_RATIO = UINT64(0x9e3779b97f4a7c13);
 typedef UINT64 ISAAC_INT;
@@ -228,7 +228,7 @@ inline T QTIsaac<ALPHA, T>::ind(T *mm, T x)
 {
 #ifndef __ISAAC64
    return (*(T *)((byte *)(mm) + ((x) & ((N - 1) << 2))));
-#else  // __ISAAC64
+#else // __ISAAC64
    return (*(T *)((byte *)(mm) + ((x) & ((N - 1) << 3))));
 #endif // __ISAAC64
 }
@@ -270,7 +270,7 @@ void QTIsaac<ALPHA, T>::shuffle(T &a, T &b, T &c, T &d, T &e, T &f, T &g, T &h)
    h ^= a >> 9;
    c += h;
    a += b;
-#else  // __ISAAC64
+#else // __ISAAC64
    a -= e;
    f ^= h >> 9;
    h += a;
@@ -320,7 +320,7 @@ void QTIsaac<ALPHA, T>::isaac(randctx *ctx)
       rngstep((a >> 6), a, b, mm, m, m2, r, x, y);
       rngstep((a << 2), a, b, mm, m, m2, r, x, y);
       rngstep((a >> 16), a, b, mm, m, m2, r, x, y);
-#else  // __ISAAC64
+#else // __ISAAC64
       rngstep(~(a ^ (a << 21)), a, b, mm, m, m2, r, x, y);
       rngstep(a ^ (a >> 5), a, b, mm, m, m2, r, x, y);
       rngstep(a ^ (a << 12), a, b, mm, m, m2, r, x, y);
@@ -337,7 +337,7 @@ void QTIsaac<ALPHA, T>::isaac(randctx *ctx)
       rngstep((a >> 6), a, b, mm, m, m2, r, x, y);
       rngstep((a << 2), a, b, mm, m, m2, r, x, y);
       rngstep((a >> 16), a, b, mm, m, m2, r, x, y);
-#else  // __ISAAC64
+#else // __ISAAC64
       rngstep(~(a ^ (a << 21)), a, b, mm, m, m2, r, x, y);
       rngstep(a ^ (a >> 5), a, b, mm, m, m2, r, x, y);
       rngstep(a ^ (a << 12), a, b, mm, m, m2, r, x, y);

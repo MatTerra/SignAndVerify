@@ -33,7 +33,7 @@ int sign(std::string inFile, RSA_ *rsa, bool base64out)
     {
         char encBits[rsa->getSize()];
         fromBinary(encBits, signature);
-        signature = base64_encode(signature.c_str(), rsa->getSize() / 8);
+        signature = base64_encode(encBits, rsa->getSize() / 8);
     }
     output << signature;
     input.close();
@@ -44,12 +44,13 @@ int sign(std::string inFile, RSA_ *rsa, bool base64out)
 int verify(std::string inFile, RSA_ *rsa, bool base64in)
 {
     std::ifstream input(inFile);
-    std::ifstream sigFile(inFile + ".sig");
-    std::string toVerify;
     std::stringstream buffer;
     buffer << input.rdbuf();
     std::string content = buffer.str();
     std::string hash = sha3_256(content);
+
+    std::ifstream sigFile(inFile + ".sig");
+    std::string toVerify;
     std::getline(sigFile, toVerify);
 
     TRACE("Read file");
@@ -58,9 +59,7 @@ int verify(std::string inFile, RSA_ *rsa, bool base64in)
         std::string decoded = base64_decode(toVerify.c_str());
         toVerify = toBinary(decoded.substr(0, decoded.size() - 1));
     }
-    std::cout << toVerify << std::endl;
-    // toDecrypt.size();
-    std::cout << "RSA key length is " << rsa->getSize() << std::endl;
+
     if (toVerify.size() != rsa->getSize())
     {
         std::cerr << "Wrong signature size!";
@@ -277,10 +276,9 @@ int main(int argc, char **argv)
     switch (command)
     {
     case Command::SIGN:
-        /* code */
-        break;
+        return sign(file, my_rsa, base64out);
     case Command::VERIFY:
-        break;
+        return verify(file, my_rsa, base64out);
     case Command::ENCRYPT:
         return encrypt(file, output, my_rsa, base64out);
     case Command::DECRYPT:

@@ -224,15 +224,15 @@ std::string RSA_::sign(std::string plaintext)
     }
     TRACE("Padding plaintext\n");
     OAEP oaep(this->size, this->size - 512);
-    char toEncrypt[this->size + 1];
-    oaep.addPadding(plaintext, toEncrypt);
-    TRACE("Padded plaintext is " << toEncrypt << ", with size " << sizeof(toEncrypt) << "\n");
-    TRACE("Plaintext in binary is " << toBinary(toEncrypt).c_str() << ", with size " << toBinary(toEncrypt).size() << "\n");
+    char toSign[this->size + 1];
+    oaep.addPadding(plaintext, toSign);
+    TRACE("Padded plaintext is " << toSign << ", with size " << sizeof(toSign) << "\n");
+    TRACE("Plaintext in binary is " << toBinary(toSign).c_str() << ", with size " << toBinary(toSign).size() << "\n");
     mpz_t plaintext_integer;
     mpz_t ciphertext_integer;
     mpz_init(plaintext_integer);
     mpz_init(ciphertext_integer);
-    mpz_set_str(plaintext_integer, toBinary(toEncrypt).c_str(), 2);
+    mpz_set_str(plaintext_integer, toBinary(toSign).c_str(), 2);
     mpz_powm(ciphertext_integer, plaintext_integer, this->d, this->n);
     TRACE("Power done\n");
     char ciphertext_binary[this->size];
@@ -256,7 +256,7 @@ std::string RSA_::decrypt(std::string ciphertext)
     {
         throw inputTooLargeException("Ciphertext must be of the same size as the modulus n!");
     }
-    TRACE("Decrypting " + ciphertext + "\n");
+    TRACE("Verifying " + ciphertext + "\n");
     mpz_t ciphertext_;
     mpz_init_set_str(ciphertext_, ciphertext.c_str(), 2);
     TRACE("Imported number to mpz\n");

@@ -1,5 +1,17 @@
 #include "oaep.h"
 
+OAEP::OAEP(int n, int k0, int k1) : n(n), k0(k0), k1(k1)
+{
+    if (n % 8 != 0)
+        throw std::runtime_error("The modulus must be a multiple of 8");
+    if (n - k1 < k0)
+        throw std::runtime_error("The modulus must be at least 328 bits");
+    if (n < k0 + k1 - 8)
+        throw std::runtime_error("The modulus must be greater than k0+k1");
+    if (k1 % 8 != 0)
+        throw std::runtime_error("K1 must be a multiple of 8");
+}
+
 OAEP::OAEP(int n, int k1) : n(n), k0(256), k1(k1)
 {
     if (n % 8 != 0)

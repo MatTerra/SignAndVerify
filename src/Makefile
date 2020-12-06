@@ -14,7 +14,7 @@ CXX_SOURCE=$(wildcard *.cpp)
 H_SOURCE=$(wildcard *.h)
 
 # Object files
-OBJ=base64.o isaac.o oaep.o rsa_.o str_utils.o
+OBJ=base64.o isaac.o oaep.o rsa_.o str_utils.o sha3_256.o
 
 all: $(PROJ_NAME)
 
@@ -41,5 +41,3 @@ test.o: teste.cpp
 isaac.o: isaac.cpp
 	$(CC) -o $@ $< -c $(CC_FLAGS)
 
-sha3_256.o: sha3_256.cpp
-	$(CC) -o $@ $< -c $(CC_FLAGS)
