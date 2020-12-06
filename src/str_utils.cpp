@@ -38,4 +38,5 @@ void fromBinary(char *output, std::string input)
         c = char(bits.to_ulong());
         output[i++] = c;
     }
+    output[i] = '\0';
 }

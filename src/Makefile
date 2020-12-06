@@ -21,7 +21,7 @@ all: $(PROJ_NAME)
 $(PROJ_NAME): main.o $(OBJ)
 	$(CC) $(CC_FLAGS) -o $@ $^ 
 
-test: base64.o str_utils.o rsa_.o oaep.o test.o
+test: base64.o str_utils.o rsa_.o oaep.o test.o sha3_256.o
 	$(CC) $(CC_FLAGS) -o $@ $^
 	$(info Done building test, running test suite)
 	./test
@@ -39,4 +39,7 @@ test.o: teste.cpp
 	$(CC) -o $@ $< -c $(CC_FLAGS)
 
 isaac.o: isaac.cpp
+	$(CC) -o $@ $< -c $(CC_FLAGS)
+
+sha3_256.o: sha3_256.cpp
 	$(CC) -o $@ $< -c $(CC_FLAGS)

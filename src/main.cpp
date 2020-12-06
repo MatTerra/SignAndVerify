@@ -1,10 +1,13 @@
 #include <string>
 #include <getopt.h>
 #include <sysexits.h>
+#include <fstream>
+#include <sstream>
 
 #include "rsa_.h"
 #include "str_utils.h"
 #include "base64.h"
+#include "sha3_256.h"
 
 enum Command
 {
@@ -15,6 +18,62 @@ enum Command
     DECRYPT = 4,
     GENERATE_KEYS = 5
 };
+
+int sign(std::string inFile, RSA_ *rsa, bool base64out)
+{
+    std::string outFile = inFile + ".sig";
+    std::ifstream input(inFile);
+    std::ofstream output(outFile);
+    std::stringstream buffer;
+    buffer << input.rdbuf();
+    std::string content = buffer.str();
+    std::string hash = sha3_256(content);
+    std::string signature = rsa->sign(hash);
+    if (base64out)
+    {
+        char encBits[rsa->getSize()];
+        fromBinary(encBits, signature);
+        signature = base64_encode(signature.c_str(), rsa->getSize() / 8);
+    }
+    output << signature;
+    input.close();
+    output.close();
+    return EXIT_SUCCESS;
+}
+
+int verify(std::string inFile, RSA_ *rsa, bool base64in)
+{
+    std::ifstream input(inFile);
+    std::ifstream sigFile(inFile + ".sig");
+    std::string toVerify;
+    std::stringstream buffer;
+    buffer << input.rdbuf();
+    std::string content = buffer.str();
+    std::string hash = sha3_256(content);
+    std::getline(sigFile, toVerify);
+
+    TRACE("Read file");
+    if (base64in)
+    {
+        std::string decoded = base64_decode(toVerify.c_str());
+        toVerify = toBinary(decoded.substr(0, decoded.size() - 1));
+    }
+    std::cout << toVerify << std::endl;
+    // toDecrypt.size();
+    std::cout << "RSA key length is " << rsa->getSize() << std::endl;
+    if (toVerify.size() != rsa->getSize())
+    {
+        std::cerr << "Wrong signature size!";
+        exit(EX_USAGE);
+    }
+
+    bool verified = rsa->verify(toVerify, hash);
+
+    std::cout << verified << std::endl;
+
+    input.close();
+    sigFile.close();
+}
 
 int encrypt(std::string inFile, std::string outFile, RSA_ *rsa, bool base64out)
 {
@@ -46,7 +105,7 @@ int encrypt(std::string inFile, std::string outFile, RSA_ *rsa, bool base64out)
     return EXIT_SUCCESS;
 }
 
-int decrypt(std::string inFile, std::string outFile, RSA_ *rsa, bool base64out)
+int decrypt(std::string inFile, std::string outFile, RSA_ *rsa, bool base64in)
 {
 
     if (outFile == "")
@@ -56,17 +115,21 @@ int decrypt(std::string inFile, std::string outFile, RSA_ *rsa, bool base64out)
     TRACE("Chose encrypt, reading file");
     std::string toDecrypt;
     std::getline(input, toDecrypt);
-    // if (toEncrypt.size() > rsa->getSize() / 8)
-    // {
-    //     std::cerr << "File to long to encrypt using this key!";
-    //     exit(EX_USAGE);
-    // }
+
     TRACE("Read file");
-    if (base64out)
+    if (base64in)
     {
-        toDecrypt = toBinary(base64_decode(toDecrypt.c_str()));
+        std::string decoded = base64_decode(toDecrypt.c_str());
+        toDecrypt = toBinary(decoded.substr(0, decoded.size() - 1));
     }
     std::cout << toDecrypt << std::endl;
+    // toDecrypt.size();
+    std::cout << "RSA key length is " << rsa->getSize() << std::endl;
+    if (toDecrypt.size() != rsa->getSize())
+    {
+        std::cerr << "Wrong file size!";
+        exit(EX_USAGE);
+    }
 
     std::string dec = rsa->decrypt(toDecrypt);
 

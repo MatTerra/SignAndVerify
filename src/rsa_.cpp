@@ -1,5 +1,4 @@
 #include "rsa_.h"
-#include <fstream>
 
 const unsigned int RSA_::getSize()
 {
@@ -214,6 +213,43 @@ std::string RSA_::encrypt(std::string plaintext)
     return ciphertext;
 }
 
+#include "base64.h"
+
+std::string RSA_::sign(std::string plaintext)
+{
+    TRACE("Encrypting " + plaintext + "\n");
+    if (this->size < plaintext.size())
+    {
+        throw inputTooLargeException("Plaintext must be smaller than the modulus n!");
+    }
+    TRACE("Padding plaintext\n");
+    OAEP oaep(this->size, this->size - 512);
+    char toEncrypt[this->size + 1];
+    oaep.addPadding(plaintext, toEncrypt);
+    TRACE("Padded plaintext is " << toEncrypt << ", with size " << sizeof(toEncrypt) << "\n");
+    TRACE("Plaintext in binary is " << toBinary(toEncrypt).c_str() << ", with size " << toBinary(toEncrypt).size() << "\n");
+    mpz_t plaintext_integer;
+    mpz_t ciphertext_integer;
+    mpz_init(plaintext_integer);
+    mpz_init(ciphertext_integer);
+    mpz_set_str(plaintext_integer, toBinary(toEncrypt).c_str(), 2);
+    mpz_powm(ciphertext_integer, plaintext_integer, this->d, this->n);
+    TRACE("Power done\n");
+    char ciphertext_binary[this->size];
+    mpz_get_str(ciphertext_binary, 2, ciphertext_integer);
+    TRACE("Got ciphertext from mpz\n");
+
+    std::string ciphertext(ciphertext_binary);
+    TRACE("Ciphertext is " << ciphertext << ", with size " << ciphertext.size() << "\n");
+    while (ciphertext.size() < this->size)
+    {
+        ciphertext = ciphertext.insert(0, "0");
+    }
+    TRACE("Ciphertext is " << ciphertext << ", with size " << ciphertext.size() << "\n");
+
+    return ciphertext;
+}
+
 std::string RSA_::decrypt(std::string ciphertext)
 {
     if (this->size < ciphertext.size())
@@ -241,4 +277,35 @@ std::string RSA_::decrypt(std::string ciphertext)
     OAEP oaep(this->size, this->size - 512);
     std::string result = oaep.removePadding(output);
     return result;
+}
+
+bool RSA_::verify(std::string ciphertext, std::string hash)
+{
+    if (this->size < ciphertext.size())
+    {
+        throw inputTooLargeException("Ciphertext must be of the same size as the modulus n!");
+    }
+    TRACE("Decrypting " + ciphertext + "\n");
+    mpz_t ciphertext_;
+    mpz_init_set_str(ciphertext_, ciphertext.c_str(), 2);
+    TRACE("Imported number to mpz\n");
+    mpz_powm(ciphertext_, ciphertext_, this->e, this->n);
+    TRACE("Power done\n");
+    char plaintext_[this->size];
+    mpz_get_str(plaintext_, 2, ciphertext_);
+    TRACE("Got plaintext from mpz\n");
+    std::string plaintext(plaintext_);
+    if (plaintext.length() < this->size)
+    {
+        std::string missing_zeros(this->size - plaintext.length(), '0');
+        plaintext = missing_zeros + plaintext;
+    }
+    TRACE("Plaintext is " + plaintext + "\n");
+    char output[this->size];
+    fromBinary(output, plaintext);
+    OAEP oaep(this->size, this->size - 512);
+    std::string result = oaep.removePadding(output);
+    TRACE(base64_encode(hash.c_str(), 32) << std::endl
+                                          << base64_encode(result.c_str(), 32) << std::endl);
+    return result == hash;
 }

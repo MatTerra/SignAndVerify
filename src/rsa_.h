@@ -8,10 +8,7 @@
 #include <random>
 #include <sysexits.h>
 
-#include "isaac.cpp"
 #include "str_utils.h"
-#include "base64.h"
-#include "rsa_.h"
 #include "oaep.h"
 
 #define PUBLIC 0
@@ -63,6 +60,8 @@ public:
     RSA_(std::string);
     std::string encrypt(std::string);
     std::string decrypt(std::string);
+    std::string sign(std::string);
+    bool verify(std::string, std::string);
     static unsigned int getKeySize(std::string);
     void writeKeysToFile(std::string);
     const unsigned int getSize();

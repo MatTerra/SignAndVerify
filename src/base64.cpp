@@ -115,5 +115,6 @@ std::string base64_decode(const char *encoded_string)
         for (j = 0; (j < i - 1); j++)
             ret += char_array_3[j];
     }
+    ret += '\0';
     return ret;
 }
