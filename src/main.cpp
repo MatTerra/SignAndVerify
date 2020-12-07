@@ -68,8 +68,6 @@ int verify(std::string inFile, RSA_ *rsa, bool base64in)
 
     bool verified = rsa->verify(toVerify, hash);
 
-    std::cout << verified << std::endl;
-
     input.close();
     sigFile.close();
 }
@@ -91,7 +89,6 @@ int encrypt(std::string inFile, std::string outFile, RSA_ *rsa, bool base64out)
     }
     TRACE("Read file");
     std::string enc = rsa->encrypt(toEncrypt);
-    std::cout << enc << std::endl;
     if (base64out)
     {
         char encBits[rsa->getSize()];
@@ -121,9 +118,6 @@ int decrypt(std::string inFile, std::string outFile, RSA_ *rsa, bool base64in)
         std::string decoded = base64_decode(toDecrypt.c_str());
         toDecrypt = toBinary(decoded.substr(0, decoded.size() - 1));
     }
-    std::cout << toDecrypt << std::endl;
-    // toDecrypt.size();
-    std::cout << "RSA key length is " << rsa->getSize() << std::endl;
     if (toDecrypt.size() != rsa->getSize())
     {
         std::cerr << "Wrong file size!";
@@ -131,8 +125,6 @@ int decrypt(std::string inFile, std::string outFile, RSA_ *rsa, bool base64in)
     }
 
     std::string dec = rsa->decrypt(toDecrypt);
-
-    std::cout << dec << std::endl;
 
     output << dec;
     input.close();
@@ -201,6 +193,11 @@ int main(int argc, char **argv)
             generateKeys = true;
             if (command == Command::NOCOMMAND)
                 command = Command::GENERATE_KEYS;
+            if (command == Command::VERIFY || command == Command::DECRYPT)
+            {
+                std::cout << "Can't generate keys while verifying or decrypting!";
+                exit(EX_USAGE);
+            }
             break;
 
         // Operation-related arguments
@@ -278,7 +275,15 @@ int main(int argc, char **argv)
     case Command::SIGN:
         return sign(file, my_rsa, base64out);
     case Command::VERIFY:
-        return verify(file, my_rsa, base64out);
+        if (verify(file, my_rsa, base64out))
+        {
+            std::cout << "Valid signature!" << std::endl;
+        }
+        else
+        {
+            std::cout << "Invalid signature!" << std::endl;
+        }
+        break;
     case Command::ENCRYPT:
         return encrypt(file, output, my_rsa, base64out);
     case Command::DECRYPT:
@@ -293,7 +298,5 @@ int main(int argc, char **argv)
         exit(EX_USAGE);
         break;
     }
-
-    // std::cout << SHA3::calculate_file_hash("my_file");
     return 0;
 }
